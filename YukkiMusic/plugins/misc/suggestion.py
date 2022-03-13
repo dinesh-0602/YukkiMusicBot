@@ -170,84 +170,82 @@ suggestor = {}
 
 
 async def dont_do_this():
-    if config.AUTO_SUGGESTION_MODE == str(True):
-        while not await asyncio.sleep(LEAVE_TIME):
-            try:
-                chats = []
-                if config.PRIVATE_BOT_MODE == str(True):
-                    schats = await get_private_served_chats()
-                else:
-                    schats = await get_served_chats()
-                for chat in schats:
-                    chats.append(int(chat["chat_id"]))
-                total = int((len(chats)) / 10)
-                if final < 10:
-                    final = int(total)
-                send_to = 0
-                random.shuffle(chats)
-                for x in chats:
-                    if send_to == final:
-                        break
-                    if x == config.LOG_GROUP_ID:
-                        continue
-                    string = random.choice(strings)
-                    previous = suggestor.get(x)
-                    if previous:
-                        if previous == string["value"]:
-                            string = random.choice(strings)
-                            if previous == string["value"]:
-                                string = random.choice(strings)
-                    suggestor[x] = string["value"]
-                    if string["markup"] is None:
-                        try:
-                            sent = await app.send_message(
-                                x, string["msg"]
-                            )
-                            if x not in clean:
-                                clean[x] = []
-                            time_now = datetime.now()
-                            put = {
-                                "msg_id": sent.message_id,
-                                "timer_after": time_now
-                                + timedelta(
-                                    minutes=config.CLEANMODE_DELETE_MINS
-                                ),
-                            }
-                            clean[x].append(put)
-                            send_to += 1
-                        except:
-                            pass
-                    else:
-                        key = InlineKeyboardMarkup(
-                            [
-                                [
-                                    InlineKeyboardButton(
-                                        text=string["markup"],
-                                        callback_data=string["cb"],
-                                    )
-                                ]
-                            ]
+    if config.AUTO_SUGGESTION_MODE != str(True):
+        return
+    while not await asyncio.sleep(LEAVE_TIME):
+        try:
+            if config.PRIVATE_BOT_MODE == str(True):
+                schats = await get_private_served_chats()
+            else:
+                schats = await get_served_chats()
+            chats = [int(chat["chat_id"]) for chat in schats]
+            total = (len(chats)) // 10
+            if final < 10:
+                final = total
+            send_to = 0
+            random.shuffle(chats)
+            for x in chats:
+                if send_to == final:
+                    break
+                if x == config.LOG_GROUP_ID:
+                    continue
+                string = random.choice(strings)
+                if previous := suggestor.get(x):
+                    if previous == string["value"]:
+                        string = random.choice(strings)
+                    if previous == string["value"]:
+                        string = random.choice(strings)
+                suggestor[x] = string["value"]
+                if string["markup"] is None:
+                    try:
+                        sent = await app.send_message(
+                            x, string["msg"]
                         )
-                        try:
-                            sent = await app.send_message(
-                                x, string["msg"], reply_markup=key
-                            )
-                            if x not in clean:
-                                clean[x] = []
-                            time_now = datetime.now()
-                            put = {
-                                "msg_id": sent.message_id,
-                                "timer_after": time_now
-                                + timedelta(
-                                    minutes=config.CLEANMODE_DELETE_MINS
-                                ),
-                            }
-                            clean[x].append(put)
-                            send_to += 1
-                        except:
-                            pass
-            except:
-                pass
+                        if x not in clean:
+                            clean[x] = []
+                        time_now = datetime.now()
+                        put = {
+                            "msg_id": sent.message_id,
+                            "timer_after": time_now
+                            + timedelta(
+                                minutes=config.CLEANMODE_DELETE_MINS
+                            ),
+                        }
+                        clean[x].append(put)
+                        send_to += 1
+                    except:
+                        pass
+                else:
+                    key = InlineKeyboardMarkup(
+                        [
+                            [
+                                InlineKeyboardButton(
+                                    text=string["markup"],
+                                    callback_data=string["cb"],
+                                )
+                            ]
+                        ]
+                    )
+                    try:
+                        sent = await app.send_message(
+                            x, string["msg"], reply_markup=key
+                        )
+                        if x not in clean:
+                            clean[x] = []
+                        time_now = datetime.now()
+                        put = {
+                            "msg_id": sent.message_id,
+                            "timer_after": time_now
+                            + timedelta(
+                                minutes=config.CLEANMODE_DELETE_MINS
+                            ),
+                        }
+                        clean[x].append(put)
+                        send_to += 1
+                    except:
+                        pass
+        except:
+            pass
 
 
 asyncio.create_task(dont_do_this())
