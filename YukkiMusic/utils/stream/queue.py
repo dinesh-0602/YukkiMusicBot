@@ -36,8 +36,7 @@ async def put_queue(
         "vidid": vidid,
     }
     if forceplay:
-        check = db.get(chat_id)
-        if check:
+        if check := db.get(chat_id):
             check.insert(0, put)
         else:
             db[chat_id] = []
@@ -77,8 +76,7 @@ async def put_queue_index(
         "vidid": vidid,
     }
     if forceplay:
-        check = db.get(chat_id)
-        if check:
+        if check := db.get(chat_id):
             check.insert(0, put)
         else:
             db[chat_id] = []
